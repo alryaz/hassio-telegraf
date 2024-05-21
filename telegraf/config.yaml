@@ -49,6 +49,8 @@ options:
   smart_monitor:
     enabled: false
     timeout: 30s
+  syslog_receiver:
+    enabled: true
   ipmi_sensor:
     enabled: false
     interval: 30s
