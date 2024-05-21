@@ -37,6 +37,7 @@ options:
     enabled: true
     url: http://a0d7b954-influxdb:8086
     db: telegraf
+    retention_policy: autogen
   kernel:
     enabled: true
   swap:
