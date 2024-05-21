@@ -109,6 +109,8 @@ schema:
   prometheus:
     enabled: bool
     metrics_path: str
+  syslog_receiver:
+    enabled: bool
 ports:
   9273/tcp: 9273
   6514/udp: 6514
