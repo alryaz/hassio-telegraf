@@ -27,6 +27,7 @@ IPMI_INTERVAL=$(bashio::config 'ipmi_sensor.interval')
 IPMI_TIMEOUT=$(bashio::config 'ipmi_sensor.timeout')
 CUSTOM_CONF_ENABLED=$(bashio::config 'custom_conf.enabled')
 CUSTOM_CONF=$(bashio::config 'custom_conf.location')
+SYSLOG_RECEIVER_ENABLED=$(bashio::config 'syslog_receiver.enabled')
 
 
 if bashio::var.true "${CUSTOM_CONF_ENABLED}"; then
@@ -103,6 +104,14 @@ else
     bashio::log.info "Updating config for Kernel"
     {
       echo "[[inputs.kernel]]"
+    } >> $CONFIG
+  fi
+
+  if bashio::config.true 'syslog_receiver.enabled'; then
+    bashio::log.info "Updating config for Syslog"
+    {
+      echo "[[inputs.syslog]]"
+      echo "  server = 'udp://:6514'"
     } >> $CONFIG
   fi
 
