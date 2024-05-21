@@ -112,4 +112,4 @@ schema:
 ports:
   9273/tcp: 9273
   6514/udp: 6514
-image: sabuto/{arch}-hassio-telegraf
+# image: sabuto/{arch}-hassio-telegraf
