@@ -116,7 +116,7 @@ else
     bashio::log.info "Updating config for Syslog"
     {
       echo "[[inputs.syslog]]"
-      echo "  server = 'udp://:6514'"
+      echo "  server = 'udp4://0.0.0.0:6514'"
     } >> $CONFIG
   fi
 
