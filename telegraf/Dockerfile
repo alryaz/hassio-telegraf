@@ -1,34 +1,39 @@
-ARG BUILD_FROM=ghcr.io/hassio-addons/debian-base/amd64:6.2.7
-# hadolint ignore=DL3006
-FROM ${BUILD_FROM}
+FROM golang:alpine AS builder
+ARG YJ_VERSION=5.1.0
 
-# Set shell
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+# Require some dependencies
+RUN apk update && apk add --no-cache git
+WORKDIR /workspace
 
-# Setup base system
-ARG BUILD_ARCH=amd64
-
-ARG TELEGRAF_VERSION
-
-# Setup base
+# Download yj utility
 RUN \
-    apt-get update \
-    && apt-get install -y --no-install-recommends \
-        iputils-ping snmp procps lm-sensors smartmontools ipmitool \
-    && ARCH="${BUILD_ARCH}" \
-    && if [ "${BUILD_ARCH}" = "aarch64" ]; then ARCH="arm64"; fi \
-    && if [ "${BUILD_ARCH}" = "armv7" ]; then ARCH="armhf"; fi \
-    && curl -J -L -o /tmp/telegraf.deb \
-        "https://dl.influxdata.com/telegraf/releases/telegraf_${TELEGRAF_VERSION}-1_${ARCH}.deb" \
-    && dpkg --install /tmp/telegraf.deb \
-    && rm -fr \
-        /tmp/* \
-        /var/{cache,log}/* \
-        /var/lib/apt/lists/* 
+    git clone https://github.com/sclevine/yj.git /workspace \
+    && git checkout "v${YJ_VERSION}"
+
+# Build yj utility
+RUN go build -ldflags "-X main.Version=${YJ_VERSION}" .
+
+# Build Telegraf container
+ARG BUILD_FROM
+FROM $BUILD_FROM as base
+
+# Set up base system
+ENV LANG C.UTF-8
+#SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Install necessary packages
+RUN \
+    apk update && apk add --no-cache \
+        iputils-ping net-snmp procps smartmontools ipmitool \
+        lm-sensors lm-sensors-sensord lm-sensors-detect
+
+# Copy over yj utility
+COPY --from=builder /workspace/yj /bin/yj
 
 # Copy root filesystem
 COPY rootfs /
 
+# Set permissions on root file system
 RUN chown root /etc/cont-init.d/telegraf.sh
 RUN chown root /etc/telegraf/telegraf.conf
 RUN chown root /etc/services.d/telegraf/run
@@ -37,8 +42,14 @@ RUN chmod 775 /etc/cont-init.d/telegraf.sh
 RUN chmod 775 /etc/telegraf/telegraf.conf
 RUN chmod 775 /etc/services.d/telegraf/run
 RUN chmod 775 /etc/services.d/telegraf/finish
-        
-EXPOSE 8092/udp 8094 8125/udp 9273/tcp 6514
+
+# Expose necessary ports
+EXPOSE \
+    8092/udp \
+    8094 \
+    8125/udp \
+    9273/tcp \
+    6514
 
 # Build arguments
 ARG BUILD_ARCH
