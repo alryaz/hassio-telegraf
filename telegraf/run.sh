@@ -27,8 +27,7 @@ IPMI_INTERVAL=$(bashio::config 'ipmi_sensor.interval')
 IPMI_TIMEOUT=$(bashio::config 'ipmi_sensor.timeout')
 CUSTOM_CONF_ENABLED=$(bashio::config 'custom_conf.enabled')
 CUSTOM_CONF=$(bashio::config 'custom_conf.location')
-SYSLOG_RECEIVER_ENABLED=$(bashio::config 'syslog_receiver.enabled')
-
+SYSLOG_RECEIVER_SOCKET=$( bashio::config 'syslog_receiver.socket' 'udp4' )
 
 if bashio::var.true "${CUSTOM_CONF_ENABLED}"; then
   bashio::log.info "Using custom conf file"
@@ -111,7 +110,19 @@ else
     bashio::log.info "Updating config for Syslog"
     {
       echo "[[inputs.syslog]]"
-      echo "  server = 'udp4://0.0.0.0:6514'"
+      echo "  server = '${SYSLOG_RECEIVER_SOCKET}://$( [[ "${SYSLOG_RECEIVER_SOCKET}" = *6 ]] && '::0' || '0.0.0.0' ):6514'"
+      echo "  standard = '$( bashio::config 'syslog_receiver.standard' 'RFC5424' )'"
+      echo "  framing = '$( bashio::config 'syslog_receiver.framing' 'octet-counting' )'"
+      echo "  trailer = '$( bashio::config 'syslog_receiver.trailer' 'LF' )'"
+      echo "  best_effort = '$( bashio::config 'syslog_receiver.best_effort' 'false' )'"
+      if [[ "$( bashio::config 'syslog_receiver.socket' 'udp4' )" = tcp* ]]; then
+        echo "  keep_alive_period = '$( bashio::config 'syslog_receiver.keep_alive_period' '5m' )'"
+        echo "  read_timeout = '$( bashio::config 'syslog_receiver.read_timeout' '0' )s'"
+        if bashio::config.has_value 'syslog_receiver.tls_cert' && bashio::config.has_value 'syslog_receiver.tls_key'; then
+          echo "  tls_cert = '/ssl/$( bashio::config 'syslog_receiver.tls_cert' )'"
+          echo "  tls_key = '/ssl/$( bashio::config 'syslog_receiver.tls_key' )'"
+        fi
+      fi
     } >> $CONFIG
   fi
 
