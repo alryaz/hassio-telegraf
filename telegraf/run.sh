@@ -115,7 +115,7 @@ else
       echo "  framing = '$( bashio::config 'syslog_receiver.framing' 'octet-counting' )'"
       echo "  trailer = '$( bashio::config 'syslog_receiver.trailer' 'LF' )'"
       echo "  best_effort = '$( bashio::config 'syslog_receiver.best_effort' 'false' )'"
-      if [[ "$( bashio::config 'syslog_receiver.socket' 'udp4' )" = tcp* ]]; then
+      if [[ "${SYSLOG_RECEIVER_SOCKET}" = tcp* ]]; then
         echo "  keep_alive_period = '$( bashio::config 'syslog_receiver.keep_alive_period' '5m' )'"
         echo "  read_timeout = '$( bashio::config 'syslog_receiver.read_timeout' '0' )s'"
         if bashio::config.has_value 'syslog_receiver.tls_cert' && bashio::config.has_value 'syslog_receiver.tls_key'; then
