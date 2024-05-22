@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: shellcheck
-        run: shellcheck telegraf/run.sh
+        run: shellcheck telegraf/rootfs/etc/cont-init.d/telegraf.sh
       - name: build docker files
         uses: home-assistant/builder@master
         with:
